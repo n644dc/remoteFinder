@@ -7,13 +7,16 @@ import json
 
 cl = []
 
-registerList = None
-
 class IndexHandler(web.RequestHandler):
     def get(self):
         self.render("index.html")
 
 class SocketHandler(websocket.WebSocketHandler):
+    
+    self.REGISTER_FILE = 'registerList.json'
+    
+    self.registerList = None
+
     def check_origin(self, origin):
         return True
 
@@ -36,20 +39,21 @@ class SocketHandler(websocket.WebSocketHandler):
        data = {"type": "server", "value" : message}
        self.write_message(data)
          
-    def getRegister(self, path):
+    def readRegister(self, path):
       registerList = None
       
-      if not os.path.isfile('registerList.json'):
-        with open('registerList.json', 'w'): pass
+      if not os.path.isfile(self.REGISTER_FILE):
+        with open(self.REGISTER_FILE, 'w'): pass
         print('New Register List Created.')
         
       with open(path) as f:
         registerList = f.readlines()
         print('registerList loaded.')
     
-    def writeRegister(self, path, list):
+    def writeRegister(self, path):
       print("Not Implemented")
       # Implement
+      # write self.REGISTER_FILE with registerList
     
     def addRemote(self, remoteString):
       print(remoteString)
