@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dartmouth Remote Finder</title>
+  <!-- Latest compiled and minified CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+<body>
+  <div class="container">
+    <h1>Are you in Hell? Find the Remote and Return to Heaven</h1>
+    <h4>Version 1.5.4</h4>
+    <hr>
+      Socket Status: <span id="status"></span>
+    <hr>
+
+	<div class="well">
+		Message: <span id="message"></span>
+	</div>
+  
+	<div class="well">
+		<div class="btn-group btn-group-justified" role="group" aria-label="...">
+			<div class="btn-group" role="group">
+				<button type="button" class="btn btn-default direction" value="left">Left</button>
+			</div>
+			<div class="btn-group" role="group">
+				<button type="button" class="btn btn-default direction" value="forward">Foward</button>
+			</div>
+			<div class="btn-group" role="group">
+				<button type="button" class="btn btn-default direction" value="reverse">Reverse</button>
+			</div>
+			<div class="btn-group" role="group">
+				<button type="button" class="btn btn-default direction" value="right">Right</button>
+			</div>
+		</div>
+	</div>
+
+	<script
+    src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+    crossorigin="anonymous">
+  </script>
+	
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" 
+    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" 
+    crossorigin="anonymous">
+  </script>
+
+	<script>
+    var host = window.location.host;
+    var ws = new WebSocket('wss://serenitytemple.org:8888/ws');
+    var $status = $('#status');
+    var $message = $('#message');
+    var lastMessage = null;
+
+
+    ws.onopen = function(){
+      $status.attr("class", 'label label-success');
+      $status.text('open');
+    };
+  
+    ws.onmessage = function(ev){
+      $message.attr("class", 'label label-info');
+      $message.hide();
+    
+      var data = JSON.parse(ev.data);
+      $message.text(data.value);
+      $message.fadeIn("fast");
+    };
+  
+    ws.onclose = function(ev){
+      $status.attr("class", 'label label-important');
+      $status.text('closed');
+    };
+
+    ws.onerror = function(ev){
+      $status.attr("class", 'label label-warning');
+      $status.text('error occurred');
+    };
+
+    send = function(message) {
+      ws.send(message);
+    };
+    
+    message = function(msg) {
+      if (msg != lastMessage) {
+        send(msg);
+        lastMessage = msg;
+      }	
+    };
+    
+    setStatus = function () {
+    
+    };
+    
+    getStatus = function () {
+    
+    };
+    
+    getRegister = function () {
+    
+    };
+
+	</script>
+</body>
+</html>
