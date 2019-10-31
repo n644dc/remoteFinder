@@ -1,9 +1,13 @@
 from tornado import websocket, web, ioloop
 import tornado.httpserver
+import datetime
 import os
 import json
+# https://github.com/siysun/Tornado-wss/blob/master/main.py
 
 cl = []
+
+registerList = None
 
 class IndexHandler(web.RequestHandler):
     def get(self):
@@ -14,49 +18,79 @@ class SocketHandler(websocket.WebSocketHandler):
         return True
 
     def open(self):
-        if self not in cl:
-            cl.append(self)
-        self.sendMsg("Client Connected")
+      if self not in cl:
+        cl.append(self)
+      self.sendMsg("Client Connected")
 
     def on_close(self):
-        if self in cl:
-            cl.remove(self)
+      if self in cl:
+        cl.remove(self)
 
     def on_message(self, message):
-        messageObject = json.loads(message)
-        print("Got Here - Message Received")
-        print(messageObject)
+      print(message)
+      # messageObject = json.loads(message)
+      # print(messageObject)
+      # Implement
         
     def sendMsg(self, message):
-         data = {"type": "server", "value" : message}
-         self.write_message(data)
+       data = {"type": "server", "value" : message}
+       self.write_message(data)
          
-# app = web.Application([
-#     (r'/', IndexHandler),
-#     (r'/ws', SocketHandler)
-# ], auto_reload=True)
+    def getRegister(self, path):
+      registerList = None
+      
+      if not os.path.isfile('registerList.json'):
+        with open('registerList.json', 'w'): pass
+        print('New Register List Created.')
+        
+      with open(path) as f:
+        registerList = f.readlines()
+        print('registerList loaded.')
+    
+    def writeRegister(self, path, list):
+      print("Not Implemented")
+      # Implement
+    
+    def addRemote(self, remoteString):
+      print(remoteString)
+      # Implement
+        
+    def remoteRemote(self, remoteString):
+      print(remoteString)
+      # Implement
+      
+    def checkRemoteAlive(self, remoteString):
+      print(remoteString)
+      # Implement
+      
+    def getRemoteStatus(self, remoteString):
+      print(remoteString)
+      # Implement
+      
+    def setRemoteStatus(self, remoteString):
+      print(remoteString)
+      # Implement
+      
+    def remoteExists(self, remoteString):
+      print(remoteString)
+      # Implement
 
 if __name__ == '__main__':
+  config_dict = {"certfile": os.path.join(os.path.abspath('.'), "private", "cert.pem"),
+                 "keyfile": os.path.join(os.path.abspath('.'), "private", "privkey.pem"),
+                 "port": "88",
+                 "address": "0.0.0.0",
+                 "hmac_key": False,
+                 "tokens": False}
+  urls = [(r'/ws', SocketHandler)]
+  application = tornado.web.Application(urls, auto_reload=True)
+  ssl_options = dict(certfile=config_dict["certfile"], keyfile=config_dict["keyfile"])
+  http_server = tornado.httpserver.HTTPServer(application, ssl_options=ssl_options)
+  http_server.listen(int(config_dict["port"]), address=config_dict["address"])
+  SocketHandler.tokens = config_dict["hmac_key"]
 
-    config_dict = {"certfile": os.path.join(os.path.abspath('.'), "private", "cert.pem"),
-                   "keyfile": os.path.join(os.path.abspath('.'), "private", "privkey.pem"),
-                   "port": "88",
-                   "address": "0.0.0.0",
-                   "hmac_key": False,
-                   "tokens": False}
-    urls = [
-        (r'/ws', SocketHandler)]
-    application = tornado.web.Application(urls, auto_reload=True)
-    ssl_options = dict(certfile=config_dict["certfile"], keyfile=config_dict["keyfile"])
-    http_server = tornado.httpserver.HTTPServer(application, ssl_options=ssl_options)
-    http_server.listen(int(config_dict["port"]), address=config_dict["address"])
-    SocketHandler.tokens = config_dict["hmac_key"]
-
-
-
-    print("Starting server...")
-    # app.listen(8888)
-    ioloop.IOLoop.instance().start()
+  print("Starting server...")
+  ioloop.IOLoop.instance().start()
     
     
     
