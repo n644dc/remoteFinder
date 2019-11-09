@@ -13,14 +13,15 @@ class IndexHandler(web.RequestHandler):
 
 class SocketHandler(websocket.WebSocketHandler):
     
-    self.REGISTER_FILE = 'registerList.json'
+    REGISTER_FILE = 'registerList.json'
     
-    self.registerList = None
+    registerList = None
 
     def check_origin(self, origin):
         return True
 
     def open(self):
+      print("client connected")
       if self not in cl:
         cl.append(self)
       self.sendMsg("Client Connected")
@@ -82,7 +83,7 @@ class SocketHandler(websocket.WebSocketHandler):
 if __name__ == '__main__':
   config_dict = {"certfile": os.path.join(os.path.abspath('.'), "private", "cert.pem"),
                  "keyfile": os.path.join(os.path.abspath('.'), "private", "privkey.pem"),
-                 "port": "88",
+                 "port": "80",
                  "address": "0.0.0.0",
                  "hmac_key": False,
                  "tokens": False}
