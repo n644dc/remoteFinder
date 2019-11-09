@@ -80,19 +80,11 @@ class SocketHandler(websocket.WebSocketHandler):
       print(remoteString)
       # Implement
 
+applications = tornado.web.Application([(r'/ws', SocketHandler), (r'/', IndexHandler)])
+
 if __name__ == '__main__':
-  config_dict = {"certfile": os.path.join(os.path.abspath('.'), "private", "cert.pem"),
-                 "keyfile": os.path.join(os.path.abspath('.'), "private", "privkey.pem"),
-                 "port": "80",
-                 "address": "0.0.0.0",
-                 "hmac_key": False,
-                 "tokens": False}
-  urls = [(r'/ws', SocketHandler)]
-  application = tornado.web.Application(urls, auto_reload=True)
-  ssl_options = dict(certfile=config_dict["certfile"], keyfile=config_dict["keyfile"])
-  http_server = tornado.httpserver.HTTPServer(application, ssl_options=ssl_options)
-  http_server.listen(int(config_dict["port"]), address=config_dict["address"])
-  SocketHandler.tokens = config_dict["hmac_key"]
+  http_server = tornado.httpserver.HTTPServer(applications)
+  http_server.listen(8081)
 
   print("Starting server...")
   ioloop.IOLoop.instance().start()
