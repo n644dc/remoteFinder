@@ -5,7 +5,7 @@ import os
 import json
 # https://github.com/siysun/Tornado-wss/blob/master/main.py
 
-cl = []
+cl = set()
 
 class IndexHandler(web.RequestHandler):
     def get(self):
@@ -39,7 +39,7 @@ class SocketHandler(websocket.WebSocketHandler):
         
     def sendMsg(self, message):
        data = {"type": "server", "value" : message}
-       self.write_message(data)
+       [con.write_message(data) for con in cl]
          
     def readRegister(self, path):
       registerList = None
