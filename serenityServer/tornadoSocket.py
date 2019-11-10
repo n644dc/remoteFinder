@@ -32,6 +32,7 @@ class SocketHandler(websocket.WebSocketHandler):
 
     def on_message(self, message):
       print(message)
+      self.sendMsg("hi")
       # messageObject = json.loads(message)
       # print(messageObject)
       # Implement
