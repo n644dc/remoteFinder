@@ -85,7 +85,7 @@ applications = tornado.web.Application([(r'/ws', SocketHandler), (r'/', IndexHan
 
 if __name__ == '__main__':
   http_server = tornado.httpserver.HTTPServer(applications)
-  http_server.listen(8081)
+  http_server.listen(80)
 
   print("Starting server...")
   ioloop.IOLoop.instance().start()
