@@ -39,7 +39,7 @@ class SocketHandler(websocket.WebSocketHandler):
         
     def sendMsg(self, message):
        data = {"type": "server", "value" : message}
-       self.write_message(data)
+       [con.write_message(data) for con in cl]
          
     def readRegister(self, path):
       registerList = None
