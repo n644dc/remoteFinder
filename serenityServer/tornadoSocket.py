@@ -5,7 +5,7 @@ import os
 import json
 # https://github.com/siysun/Tornado-wss/blob/master/main.py
 
-cl = []
+cl = set()
 
 class IndexHandler(web.RequestHandler):
     def get(self):
