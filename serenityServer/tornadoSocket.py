@@ -2,10 +2,14 @@ from tornado import websocket, web, ioloop
 import tornado.httpserver
 import datetime
 import os
-import json
+import sqlite3
+
 # https://github.com/siysun/Tornado-wss/blob/master/main.py
 
-cl = set()
+clientList = set()
+
+dbRemotes = sqlite3.connect('remoteRegister.db')
+dbc = None
 
 class IndexHandler(web.RequestHandler):
     def get(self):
@@ -13,82 +17,77 @@ class IndexHandler(web.RequestHandler):
 
 class SocketHandler(websocket.WebSocketHandler):
     
-    REGISTER_FILE = 'registerList.json'
-    
-    registerList = None
+    def __init__(self):
+        allRemotes = dbc.execute('SELECT * FROM remotes')
+        
+        for remote in allRemotes:
+            print(remote)
 
     def check_origin(self, origin):
         return True
 
     def open(self):
-      print("client connected")
-      if self not in cl:
-        cl.append(self)
-      self.sendMsg("Client Connected")
+        print("client connected")
+        if self not in clientList:
+            clientList.append(self)
+        self.sendMsg("Client Connected")
 
     def on_close(self):
-      if self in cl:
-        cl.remove(self)
+        if self in clientList:
+            clientList.remove(self)
 
     def on_message(self, message):
-      print(message)
-      self.sendMsg("hi")
-      # messageObject = json.loads(message)
-      # print(messageObject)
-      # Implement
+        print(message)
+        self.sendMsg("hi")
+        # Implement
         
     def sendMsg(self, message):
        data = {"type": "server", "value" : message}
-       [con.write_message(data) for con in cl]
-         
-    def readRegister(self, path):
-      registerList = None
-      
-      if not os.path.isfile(self.REGISTER_FILE):
-        with open(self.REGISTER_FILE, 'w'): pass
-        print('New Register List Created.')
+       [con.write_message(data) for con in clientList]
+
+    def addRemote(self, remote):
+        if not self.remoteExists(remote['rid']):
+            dbc.execute('INSERT INTO remotes VALUES ({0}, {1}, {2})'.format(remote['rid'], remote['name'], remote['state']))
+            dbc.commit()
         
-      with open(path) as f:
-        registerList = f.readlines()
-        print('registerList loaded.')
-    
-    def writeRegister(self, path):
-      print("Not Implemented")
-      # Implement
-      # write self.REGISTER_FILE with registerList
-    
-    def addRemote(self, remoteString):
-      print(remoteString)
-      # Implement
-        
-    def remoteRemote(self, remoteString):
-      print(remoteString)
-      # Implement
+    def getRemoteStatus(self, remote):
+        print(remote)
+        # Implement
       
-    def checkRemoteAlive(self, remoteString):
-      print(remoteString)
-      # Implement
+    def setRemoteStatus(self, remote):
+        dbc.execute('UPDATE remotes VALUES ({0}, {1}, {2})'.format(remote['rid'], remote['name'], remote['state']))
+        dbc.commit()
       
-    def getRemoteStatus(self, remoteString):
-      print(remoteString)
-      # Implement
-      
-    def setRemoteStatus(self, remoteString):
-      print(remoteString)
-      # Implement
-      
-    def remoteExists(self, remoteString):
-      print(remoteString)
-      # Implement
+    def remoteExists(self, rid):
+        remote = dbc.execute("SELECT * FROM remotes WHERE rid=?", (rid,))
+        if dbc.fetchone() is None:
+            return False
+        return True
+
+##############
+
+def setupDatabase():
+    dbc = dbRemotes.cursor()
+    try:
+        allRemotes = dbc.execute('SELECT * FROM remotes')
+    except Exception as ex:
+        if 'no such table' in str(ex):
+            dbc.execute('''CREATE TABLE remotes (rid, rname, status)''')
+            dbc.commit()
+            
+##############
 
 applications = tornado.web.Application([(r'/ws', SocketHandler), (r'/', IndexHandler)])
 
 if __name__ == '__main__':
-  http_server = tornado.httpserver.HTTPServer(applications)
-  http_server.listen(80)
 
-  print("Starting server...")
-  ioloop.IOLoop.instance().start()
+    setupDatabase()
+
+    http_server = tornado.httpserver.HTTPServer(applications)
+    http_server.listen(8188)
+
+    print("Starting server...")
+    ioloop.IOLoop.instance().start()
     
     
     
