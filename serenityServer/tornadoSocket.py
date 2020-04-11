@@ -8,8 +8,6 @@ import sqlite3
 
 clientList = set()
 
-dbRemotes = None
-
 class IndexHandler(web.RequestHandler):
     def get(self):
         self.render("index.html")
@@ -21,16 +19,16 @@ class SocketHandler(websocket.WebSocketHandler):
 
     def setupDatabase(self):
         self.dbRemotes = sqlite3.connect('remoteRegister.db')
-        self.dbc = dbRemotes.cursor()
+        self.dbc = self.dbRemotes.cursor()
 
         try:
             self.dbc.execute('SELECT * FROM remotes')
         except Exception as ex:
             if 'no such table' in str(ex):
-                result =  self.dbc.execute('''CREATE TABLE remotes (rid, rname, status)''')
+                result = self.dbc.execute('''CREATE TABLE remotes (rid, rname, status)''')
                 self.dbc.commit()
 
-        print("DB is now in valid op state.")
+        print("DB is now in a valid op state.")
 
     def check_origin(self, origin):
         return True
@@ -56,22 +54,24 @@ class SocketHandler(websocket.WebSocketHandler):
 
     def addRemote(self, remote):
         if not self.remoteExists(remote['rid']):
-            dbc = dbRemotes.cursor()
-            result = self.dbc.execute('INSERT INTO remotes VALUES ({0}, {1}, {2})'.format(remote['rid'], remote['name'], remote['state']))
+            result = self.dbc.execute('INSERT INTO remotes VALUES ({0}, {1}, {2})'.format(remote['rid'], remote['name'], remote['state'], remote["time"]))
             self.dbc.commit()
         
-    def getRemoteStatus(self, remote):
-        print(remote)
-        # Implement
+    def getRemote(self, remote):
+        if self.remoteExists(remote["rid"])
+            result = dbc.execute("SELECT * FROM remotes WHERE rid=?", (rid,))
+            reResult = dbc.fetchone()
+            print(reResult)
+            return reResult 
+        return None
       
-    def setRemoteStatus(self, remote):
-        dbc = dbRemotes.cursor()
+    def updateRemote(self, remote):
+        dbc = self.dbRemotes.cursor()
         result = self.dbc.execute('UPDATE remotes VALUES ({0}, {1}, {2})'.format(remote['rid'], remote['name'], remote['state']))
         dbc.commit()
       
     def remoteExists(self, rid):
-        dbc = dbRemotes.cursor()
-        result = dbc.execute("SELECT * FROM remotes WHERE rid=?", (rid,))
+        result = self.dbc.execute("SELECT * FROM remotes WHERE rid=?", (rid,))
         if dbc.fetchone() is None:
             return False
         return True
@@ -95,17 +95,17 @@ def testSocketServer():
             
 ##############
 
-applications = tornado.web.Application([(r'/ws', SocketHandler), (r'/', IndexHandler)])
+# applications = tornado.web.Application([(r'/ws', SocketHandler), (r'/', IndexHandler)])
 
 if __name__ == '__main__':
 
     testSocketServer()
 
-    http_server = tornado.httpserver.HTTPServer(applications)
-    http_server.listen(8188)
+    # http_server = tornado.httpserver.HTTPServer(applications)
+    # http_server.listen(8188)
 
-    print("Starting server...")
-    ioloop.IOLoop.instance().start()
+    # print("Starting server...")
+    # ioloop.IOLoop.instance().start()
     
     
     
