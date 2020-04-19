@@ -26,7 +26,7 @@ class SocketHandler(websocket.WebSocketHandler):
         except Exception as ex:
             if 'no such table' in str(ex):
                 self.dbc = self.dbRemotes.cursor()
-                result = self.dbc.execute('''CREATE TABLE remotes (rid, rname, status, time)''')
+                result = self.dbc.execute('''CREATE TABLE remotes (rid, rname, state, time)''')
                 self.dbRemotes.commit()
 
         print("!!!! DB is Operational !!!!")
@@ -38,7 +38,6 @@ class SocketHandler(websocket.WebSocketHandler):
         print("client connected")
         if self not in clientList:
             clientList.add(self)
-        self.sendMsg("Client Connected")
 
     def on_close(self):
         if self in clientList:
@@ -46,47 +45,37 @@ class SocketHandler(websocket.WebSocketHandler):
         print("Client Disconnected")
 
     def on_message(self, message):
-        print(message)
-        self.sendMsg("hi")
+        returnMessage = self.processMessage(message)
+        self.sendMessage(returnMessage)
         # Implement
-        
-    def sendMsg(self, message):
-       data = {"type": "server", "value" : message}
-       [con.write_message(data) for con in clientList]
 
     def processMessage(self, message):
         msgArray = [item.strip() for item in message.split(',')]
-        
+        message = self.msgArrayToObj(msgArray)
+
+        # TODO: 
+        return "message received"
+
+    def sendMessage(self, message):
+       [con.write_message(message) for con in clientList]
+
     def getRemote(self, rid):
         if self.remoteExists(rid):
             result = self.dbc.execute("SELECT * FROM remotes WHERE rid=?", (rid,))
             res = self.dbc.fetchone()
-            returnRemote = {
-                "rid" : res[0],
-                "rname": res[1],
-                "status": res[2],
-                "time": res[3]
-            }
-            return returnRemote
+            return self.remoteArrayToObj(res)
         return None
 
     def getAllRemotes(self):
         allList = []
-
         result = self.dbc.execute("SELECT * FROM remotes")
         for res in result:
-            returnRemote = {
-                "rid" : res[0],
-                "rname": res[1],
-                "status": res[2],
-                "time": res[3]
-            }
-            allList.append(returnRemote)
+            allList.append(self.remoteArrayToObj(res))
         return allList
 
     def addRemote(self, remote):
         if not self.remoteExists(remote['rid']):
-            insertQry = "INSERT INTO remotes (rid, rname, status, time) VALUES ('{0}', '{1}', '{2}', '{3}')".format(remote['rid'], remote['rname'], remote['status'], remote["time"])
+            insertQry = "INSERT INTO remotes (rid, rname, state, time) VALUES ('{0}', '{1}', '{2}', '{3}')".format(remote['rid'], remote['rname'], remote['state'], remote["time"])
             result = self.dbc.execute(insertQry)
             self.dbRemotes.commit()
         else:
@@ -94,7 +83,7 @@ class SocketHandler(websocket.WebSocketHandler):
 
     def updateRemote(self, remote):
         if self.remoteExists(remote['rid']):
-            updateQry = "UPDATE remotes SET rname = '{0}', status = '{1}', time = '{2}' WHERE rid = '{3}'".format(remote['rname'], remote['status'], remote["time"], remote['rid'])
+            updateQry = "UPDATE remotes SET rname = '{0}', state = '{1}', time = '{2}' WHERE rid = '{3}'".format(remote['rname'], remote['state'], remote["time"], remote['rid'])
             result = self.dbc.execute(updateQry)
             self.dbRemotes.commit()
         else:
@@ -106,8 +95,23 @@ class SocketHandler(websocket.WebSocketHandler):
             return False
         return True
 
-##############
+    def remoteArrayToObj(self, remArray):
+        return {
+            "rid"  : remArray[0],
+            "rname": remArray[1],
+            "state": remArray[2],
+            "time" : remArray[3]
+        }
+    
+    def msgArrayToObj(self, msgArray):
+        return {
+            "op"    : msgArray[0],
+            "rid"   : msgArray[1],
+            "rname" : msgArray[2],
+            "state" : msgArray[3]
+        }
 
+##############
 
 def testSocketServer():
     sh = SocketHandler()
@@ -115,7 +119,7 @@ def testSocketServer():
     testremote = {
         "rid" : '1003',
         "rname": "room",
-        "status": "tooting",
+        "state": "tooting",
         "time": "128348238429342384293423"
     }
 
@@ -126,7 +130,7 @@ def testSocketServer():
 
     print(sh.getRemote(testremote["rid"]))
 
-    testremote["status"] = "quiet"
+    testremote["state"] = "quiet"
 
     sh.updateRemote(testremote)
 
